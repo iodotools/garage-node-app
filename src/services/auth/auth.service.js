@@ -67,7 +67,7 @@ class AuthService {
           create: {
             role: {
               connect: {
-                id: roleObj.id,
+                id_role: roleObj.id_role,
               },
             },
           },
@@ -96,11 +96,11 @@ class AuthService {
     );
 
     return {
-      id: user.id,
+      id: user.id_user,
       email: user.email || "",
       name: user.name,
-      roles: roles.map((r) => ({ id: r.id, name: r.name || "" })),
-      permissions: permissions.map((p) => ({ id: p.id, name: p.name || "" })),
+      roles: roles.map((r) => ({ id: r.id_role, name: r.name || "" })),
+      permissions: permissions.map((p) => ({ id: p.id_permission, name: p.name || "" })),
     };
   }
 
@@ -138,7 +138,7 @@ class AuthService {
     );
 
     const payload = {
-      sub: user.id.toString(),
+      sub: user.id_user.toString(),
       roles: roles.map((r) => r.name || ""),
       permissions: permissions.map((p) => p.name || ""),
     };
@@ -153,7 +153,7 @@ class AuthService {
     // Revoke any existing refresh tokens for this user
     await prisma.refreshToken.deleteMany({
       where: {
-        userId: user.id,
+        user: user.id_user,
       },
     });
 
@@ -164,7 +164,7 @@ class AuthService {
     await prisma.refreshToken.create({
       data: {
         token: refreshToken,
-        userId: user.id,
+        user: user.id_user,
         createdAt: new Date(),
         expiresAt,
       },
@@ -181,7 +181,7 @@ class AuthService {
       const storedToken = await prisma.refreshToken.findFirst({
         where: {
           token: refreshToken,
-          userId: parseInt(decoded.sub),
+          user: parseInt(decoded.sub),
           expiresAt: {
             gt: new Date(),
           },
@@ -218,7 +218,7 @@ class AuthService {
       );
 
       const payload = {
-        sub: user.id.toString(),
+        sub: user.id_user.toString(),
         roles: roles.map((r) => r.name || ""),
         permissions: permissions.map((p) => p.name || ""),
       };
@@ -247,7 +247,7 @@ class AuthService {
         // Delete the refresh token
         await prisma.refreshToken.delete({
           where: {
-            id: token.id,
+            id_refresh_token: token.id_refresh_token,
           },
         });
 
@@ -266,7 +266,7 @@ class AuthService {
 
   async getUser(userId) {
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id_user: userId },
       include: {
         userRoles: {
           include: {
@@ -294,13 +294,13 @@ class AuthService {
     );
 
     return {
-      id: user.id,
+      id: user.id_user,
       email: user.email,
       name: user.name,
       avatar_url: user.avatarUrl,
       display_name: user.displayName,
-      roles: roles.map((r) => ({ id: r.id, name: r.name || "" })),
-      permissions: permissions.map((p) => ({ id: p.id, name: p.name || "" })),
+      roles: roles.map((r) => ({ id: r.id_role, name: r.name || "" })),
+      permissions: permissions.map((p) => ({ id: p.id_permission, name: p.name || "" }))
     };
   }
 
