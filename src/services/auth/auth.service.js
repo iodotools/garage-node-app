@@ -9,7 +9,8 @@ const prisma = require("../../lib/prisma");
 
 // Exportar as chaves para uso em outros arquivos
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key";
+const JWT_REFRESH_SECRET =
+  process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key";
 
 class AuthService {
   constructor() {
