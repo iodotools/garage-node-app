@@ -21,6 +21,8 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: "Token has been revoked" });
     }
 
+    console.log("using:" + (process.env.JWT_SECRET || "your-secret-key"));
+
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET || "your-secret-key"
