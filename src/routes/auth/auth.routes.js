@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const { z } = require("zod");
 const { AuthService } = require("../../services/auth/auth.service");
-const { authMiddleware } = require("../../middleware/auth/auth.middleware");
+const authMiddleware = require("../../middleware/auth.middleware");
 const { validate } = require("../../middleware/validation.middleware");
 
 const authRouter = Router();
