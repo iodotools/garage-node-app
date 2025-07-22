@@ -68,7 +68,7 @@ class AuthService {
         gender: gender,
         birth_date: formattedBirthDate,
         asset_user_id: asset_user_id,
-        name,
+        name: name,
         userRoles: {
           create: {
             role: {
@@ -182,8 +182,7 @@ class AuthService {
                                 </tr>
                                 <tr>
                                     <td>
-                                        <p style="color: #666666; font-size: 14px; line-height: 20px; margin: 0;">Este código expira em 2 horas.</p>
-                                        <p style="color: #666666; font-size: 14px; line-height: 20px; margin: 20px 0 0;">Atenciosamente,<br>Equipe Kinea</p>
+                                        <p style="color: #666666; font-size: 14px; line-height: 20px; margin: 20px 0 0;">Atenciosamente,<br>Equipe Garage - DM9</p>
                                     </td>
                                 </tr>
                             </table>
