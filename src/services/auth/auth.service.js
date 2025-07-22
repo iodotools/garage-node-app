@@ -27,7 +27,7 @@ class AuthService {
   ) {
     // Check if user exists by userLogin (using email as userLogin)
     const existingUser = await prisma.user.findUnique({
-      where: { email: email },
+      where: { userLogin: email },
     });
 
     if (existingUser) {
@@ -67,7 +67,7 @@ class AuthService {
           create: {
             role: {
               connect: {
-                id_role: roleObj.id_role,
+                id: roleObj.id,
               },
             },
           },
@@ -76,11 +76,11 @@ class AuthService {
       include: {
         userRoles: {
           include: {
-            roleRelation: {
+            role: {
               include: {
                 rolePermissions: {
                   include: {
-                    permissionRelation: true,
+                    permission: true,
                   },
                 },
               },
@@ -90,32 +90,31 @@ class AuthService {
       },
     });
 
-    const roles = user.userRoles.map((ur) => ur.roleRelation);
-    const permissions = roles.flatMap((r) =>
-      r.rolePermissions.map((rp) => rp.permissionRelation)
+    const roles = user.userRoles.map((ur) => ur.role);
+    const permissions = roles.flatMap((role) =>
+      role.rolePermissions.map((rp) => rp.permission)
     );
 
     return {
-      id: user.id_user,
+      id: user.id,
       email: user.email || "",
       name: user.name,
-      roles: roles.map((r) => ({ id: r.id_role, name: r.name || "" })),
-      permissions: permissions.map((p) => ({ id: p.id_permission, name: p.name || "" })),
+      roles: roles.map((r) => ({ id: r.id, name: r.name || "" })),
+      permissions: permissions.map((p) => ({ id: p.id, name: p.name || "" })),
     };
   }
 
   async login(email, password) {
-    console.log(`Attempting login for email: ${email}`);
     const user = await prisma.user.findUnique({
-      where: { email: email },
+      where: { userLogin: email },
       include: {
         userRoles: {
           include: {
-            roleRelation: {
+            role: {
               include: {
                 rolePermissions: {
                   include: {
-                    permissionRelation: true,
+                    permission: true,
                   },
                 },
               },
@@ -125,23 +124,21 @@ class AuthService {
       },
     });
 
-    console.log('User object from Prisma:', JSON.stringify(user, null, 2));
-
     if (
       !user ||
       !user.password ||
-      !(await bcrypt.compare(password, user.password).then(res => { console.log('Password comparison result:', res); return res; }))
+      !(await bcrypt.compare(password, user.password))
     ) {
       throw new Error("Invalid credentials");
     }
 
-    const roles = user.userRoles.map((ur) => ur.roleRelation);
-    const permissions = roles.flatMap((r) =>
-      r.rolePermissions.map((rp) => rp.permissionRelation)
+    const roles = user.userRoles.map((ur) => ur.role);
+    const permissions = roles.flatMap((role) =>
+      role.rolePermissions.map((rp) => rp.permission)
     );
 
     const payload = {
-      sub: user.id_user.toString(),
+      sub: user.id.toString(),
       roles: roles.map((r) => r.name || ""),
       permissions: permissions.map((p) => p.name || ""),
     };
@@ -156,7 +153,7 @@ class AuthService {
     // Revoke any existing refresh tokens for this user
     await prisma.refreshToken.deleteMany({
       where: {
-        user: user.id_user,
+        userId: user.id,
       },
     });
 
@@ -167,7 +164,7 @@ class AuthService {
     await prisma.refreshToken.create({
       data: {
         token: refreshToken,
-        user: user.id_user,
+        userId: user.id,
         createdAt: new Date(),
         expiresAt,
       },
@@ -184,7 +181,7 @@ class AuthService {
       const storedToken = await prisma.refreshToken.findFirst({
         where: {
           token: refreshToken,
-          user: parseInt(decoded.sub),
+          userId: parseInt(decoded.sub),
           expiresAt: {
             gt: new Date(),
           },
@@ -194,11 +191,11 @@ class AuthService {
             include: {
               userRoles: {
                 include: {
-                  roleRelation: {
+                  role: {
                     include: {
                       rolePermissions: {
                         include: {
-                          permissionRelation: true,
+                          permission: true,
                         },
                       },
                     },
@@ -215,13 +212,13 @@ class AuthService {
       }
 
       const user = storedToken.user;
-      const roles = user.userRoles.map((ur) => ur.roleRelation);
-      const permissions = roles.flatMap((r) =>
-        r.rolePermissions.map((rp) => rp.permissionRelation)
+      const roles = user.userRoles.map((ur) => ur.role);
+      const permissions = roles.flatMap((role) =>
+        role.rolePermissions.map((rp) => rp.permission)
       );
 
       const payload = {
-        sub: user.id_user.toString(),
+        sub: user.id.toString(),
         roles: roles.map((r) => r.name || ""),
         permissions: permissions.map((p) => p.name || ""),
       };
@@ -250,7 +247,7 @@ class AuthService {
         // Delete the refresh token
         await prisma.refreshToken.delete({
           where: {
-            id_refresh_token: token.id_refresh_token,
+            id: token.id,
           },
         });
 
@@ -269,15 +266,15 @@ class AuthService {
 
   async getUser(userId) {
     const user = await prisma.user.findUnique({
-      where: { id_user: userId },
+      where: { id: userId },
       include: {
         userRoles: {
           include: {
-            roleRelation: {
+            role: {
               include: {
                 rolePermissions: {
                   include: {
-                    permissionRelation: true,
+                    permission: true,
                   },
                 },
               },
@@ -291,19 +288,19 @@ class AuthService {
       throw new Error("User not found");
     }
 
-    const roles = user.userRoles.map((ur) => ur.roleRelation);
-    const permissions = roles.flatMap((r) =>
-      r.rolePermissions.map((rp) => rp.permissionRelation)
+    const roles = user.userRoles.map((ur) => ur.role);
+    const permissions = roles.flatMap((role) =>
+      role.rolePermissions.map((rp) => rp.permission)
     );
 
     return {
-      id: user.id_user,
+      id: user.id,
       email: user.email,
       name: user.name,
       avatar_url: user.avatarUrl,
       display_name: user.displayName,
-      roles: roles.map((r) => ({ id: r.id_role, name: r.name || "" })),
-      permissions: permissions.map((p) => ({ id: p.id_permission, name: p.name || "" }))
+      roles: roles.map((r) => ({ id: r.id, name: r.name || "" })),
+      permissions: permissions.map((p) => ({ id: p.id, name: p.name || "" })),
     };
   }
 
@@ -313,7 +310,7 @@ class AuthService {
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: email },
+      where: { userLogin: email },
     });
 
     return {

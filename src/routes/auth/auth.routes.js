@@ -44,12 +44,7 @@ router.post("/login", async (req, res) => {
     const tokens = await authService.login(email, password);
     res.json(tokens);
   } catch (error) {
-    res
-      .status(401)
-      .json({
-        message:
-          error?.message + " " + email + " " + password || "Login failed",
-      });
+    res.status(401).json({ message: error?.message || "Login failed" });
   }
 });
 
