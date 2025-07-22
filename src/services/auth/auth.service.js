@@ -80,7 +80,7 @@ class AuthService {
               include: {
                 rolePermissions: {
                   include: {
-                    permission: true,
+                    permissionRelation: true,
                   },
                 },
               },
@@ -92,7 +92,7 @@ class AuthService {
 
     const roles = user.userRoles.map((ur) => ur.roleRelation);
     const permissions = roles.flatMap((r) =>
-      r.rolePermissions.map((rp) => rp.permission)
+      r.rolePermissions.map((rp) => rp.permissionRelation)
     );
 
     return {
@@ -114,7 +114,7 @@ class AuthService {
               include: {
                 rolePermissions: {
                   include: {
-                    permission: true,
+                    permissionRelation: true,
                   },
                 },
               },
@@ -134,7 +134,7 @@ class AuthService {
 
     const roles = user.userRoles.map((ur) => ur.roleRelation);
     const permissions = roles.flatMap((r) =>
-      r.rolePermissions.map((rp) => rp.permission)
+      r.rolePermissions.map((rp) => rp.permissionRelation)
     );
 
     const payload = {
@@ -195,7 +195,7 @@ class AuthService {
                     include: {
                       rolePermissions: {
                         include: {
-                          permission: true,
+                          permissionRelation: true,
                         },
                       },
                     },
@@ -214,7 +214,7 @@ class AuthService {
       const user = storedToken.user;
       const roles = user.userRoles.map((ur) => ur.roleRelation);
       const permissions = roles.flatMap((r) =>
-        r.rolePermissions.map((rp) => rp.permission)
+        r.rolePermissions.map((rp) => rp.permissionRelation)
       );
 
       const payload = {
@@ -274,7 +274,7 @@ class AuthService {
               include: {
                 rolePermissions: {
                   include: {
-                    permission: true,
+                    permissionRelation: true,
                   },
                 },
               },
@@ -290,7 +290,7 @@ class AuthService {
 
     const roles = user.userRoles.map((ur) => ur.roleRelation);
     const permissions = roles.flatMap((r) =>
-      r.rolePermissions.map((rp) => rp.permission)
+      r.rolePermissions.map((rp) => rp.permissionRelation)
     );
 
     return {
