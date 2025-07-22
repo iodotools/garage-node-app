@@ -286,7 +286,7 @@ class AuthService {
 
   async getUser(userId) {
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id_user: userId },
       include: {
         userRoles: {
           include: {
