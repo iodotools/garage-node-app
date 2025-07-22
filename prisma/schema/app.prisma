@@ -5,7 +5,7 @@ model PasswordReset {
 
   // Relation to User
   userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id_user], onDelete: Cascade)
 }
 
 model User {
