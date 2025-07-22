@@ -290,11 +290,11 @@ class AuthService {
       include: {
         userRoles: {
           include: {
-            role: {
+            roleRelation: {
               include: {
                 rolePermissions: {
                   include: {
-                    permission: true,
+                    permissionRelation: true,
                   },
                 },
               },
