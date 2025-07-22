@@ -1,10 +1,15 @@
 model User {
-  id       Int    @id   @map("id_user") @default(autoincrement())
-  email    String @unique
-  password String
-  name     String
-  role     String @default("USER") // USER, ADMIN
-
+  id_user      Int     @id @default(autoincrement()) @map("id_user")
+  uid          String  @unique @map("uid") @db.VarChar(36)
+  name         String? @map("name") @db.VarChar(200)
+  display_name String? @map("display_name") @db.VarChar(200)
+  user_login   String? @unique @map("user_login") @db.VarChar(200)
+  email        String? @unique @map("email") @db.VarChar(200)
+  avatar_url   String? @map("avatar_url") @db.Text
+  password     String? @map("password") @db.VarChar(200)
+  gender       String? @map("gender") @db.VarChar(50)
+  birth_date   DateTime? @map("birth_date") @db.Date
+  asset_user_id Int? @map("asset_user_id")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
