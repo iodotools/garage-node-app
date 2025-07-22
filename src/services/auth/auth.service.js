@@ -2,11 +2,14 @@ const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
 const { v4: uuidv4 } = require("uuid");
 const jwt = require("jsonwebtoken");
+const crypto = require('crypto');
+const { EmailService } = require('../email/email.service');
 
 const prisma = require("../../lib/prisma");
 
 class AuthService {
   constructor() {
+    this.emailService = new EmailService();
     this.JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
     this.JWT_REFRESH_SECRET =
       process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key";
@@ -14,20 +17,20 @@ class AuthService {
     this.JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
   }
 
-  async register(
-    email,
-    password,
-    name,
-    role = "administrator",
-    avatar_url,
-    display_name,
-    gender,
-    birth_date,
-    asset_user_id
-  ) {
-    // Check if user exists by userLogin (using email as userLogin)
+  async register(data) {
+    const {
+      email,
+      password,
+      name,
+      role = "administrator",
+      avatar_url,
+      display_name,
+      gender,
+      birth_date,
+      asset_user_id,
+    } = data;
     const existingUser = await prisma.user.findUnique({
-      where: { userLogin: email },
+      where: { email: email },
     });
 
     if (existingUser) {
@@ -36,8 +39,6 @@ class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const uid = uuidv4();
-
-    // First, find the default user role (e.g., 'user' role)
 
     const roleObj = await prisma.role.findFirst({
       where: { name: role },
@@ -67,7 +68,7 @@ class AuthService {
           create: {
             role: {
               connect: {
-                id: roleObj.id,
+                id_role: roleObj.id_role,
               },
             },
           },
@@ -76,11 +77,11 @@ class AuthService {
       include: {
         userRoles: {
           include: {
-            role: {
+            roleRelation: {
               include: {
                 rolePermissions: {
                   include: {
-                    permission: true,
+                    permissionRelation: true,
                   },
                 },
               },
@@ -90,81 +91,108 @@ class AuthService {
       },
     });
 
-    const roles = user.userRoles.map((ur) => ur.role);
-    const permissions = roles.flatMap((role) =>
-      role.rolePermissions.map((rp) => rp.permission)
+    const roles = user.userRoles.map((ur) => ur.roleRelation);
+    const permissions = roles.flatMap((r) =>
+      r.rolePermissions.map((rp) => rp.permissionRelation)
     );
 
     return {
-      id: user.id,
+      id: user.id_user,
       email: user.email || "",
       name: user.name,
-      roles: roles.map((r) => ({ id: r.id, name: r.name || "" })),
-      permissions: permissions.map((p) => ({ id: p.id, name: p.name || "" })),
+      roles: roles.map((r) => ({ id: r.id_role, name: r.name || "" })),
+      permissions: permissions.map((p) => ({ id: p.id_permission, name: p.name || "" })),
     };
   }
 
   async login(email, password) {
     const user = await prisma.user.findUnique({
-      where: { userLogin: email },
-      include: {
-        userRoles: {
-          include: {
-            role: {
-              include: {
-                rolePermissions: {
-                  include: {
-                    permission: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+      where: { email: email },
     });
 
-    if (
-      !user ||
-      !user.password ||
-      !(await bcrypt.compare(password, user.password))
-    ) {
+    if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
       throw new Error("Invalid credentials");
     }
 
-    const roles = user.userRoles.map((ur) => ur.role);
-    const permissions = roles.flatMap((role) =>
-      role.rolePermissions.map((rp) => rp.permission)
-    );
+    const twoFactorToken = crypto.randomInt(100_000, 1_000_000).toString();
+    const expires = new Date(new Date().getTime() + 15 * 60 * 1000); // 15 minutes
 
-    const payload = {
-      sub: user.id.toString(),
-      roles: roles.map((r) => r.name || ""),
-      permissions: permissions.map((p) => p.name || ""),
-    };
+    await prisma.twoFactorToken.deleteMany({ where: { user: user.id_user } });
 
-    const accessToken = jwt.sign(payload, this.JWT_SECRET, {
-      expiresIn: this.JWT_EXPIRES_IN,
-    });
-    const refreshToken = jwt.sign(payload, this.JWT_REFRESH_SECRET, {
-      expiresIn: this.JWT_REFRESH_EXPIRES_IN,
-    });
-
-    // Revoke any existing refresh tokens for this user
-    await prisma.refreshToken.deleteMany({
-      where: {
-        userId: user.id,
+    await prisma.twoFactorToken.create({
+      data: {
+        user: user.id_user,
+        token: twoFactorToken,
+        expires: expires,
       },
     });
 
-    // Store the new refresh token
+    await this.emailService.sendMail(
+      user.email,
+      'Your 2FA Code',
+      `Your 2FA code is: ${twoFactorToken}`,
+      `<h3>Your 2FA code is: ${twoFactorToken}</h3>`
+    );
+
+    return { message: '2FA code sent to your email.' };
+  }
+
+  async verifyTwoFactorToken(email, token) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) throw new Error('User not found');
+
+    const twoFactorToken = await prisma.twoFactorToken.findFirst({
+      where: { user: user.id_user, token: token },
+    });
+
+    if (!twoFactorToken) throw new Error('Invalid 2FA token');
+
+    if (new Date(twoFactorToken.expires) < new Date()) {
+      throw new Error('2FA token has expired');
+    }
+
+    await prisma.twoFactorToken.delete({ where: { id_two_factor_token: twoFactorToken.id_two_factor_token } });
+
+    const userWithRoles = await prisma.user.findUnique({
+        where: { id_user: user.id_user },
+        include: {
+            userRoles: {
+                include: {
+                    roleRelation: {
+                        include: {
+                            rolePermissions: {
+                                include: {
+                                    permissionRelation: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    const roles = userWithRoles.userRoles.map((ur) => ur.roleRelation);
+    const permissions = roles.flatMap((r) => r.rolePermissions.map((rp) => rp.permissionRelation));
+
+    const payload = {
+      sub: user.id_user.toString(),
+      roles: roles.map((r) => r.name || ''),
+      permissions: permissions.map((p) => p.name || ''),
+    };
+
+    const accessToken = jwt.sign(payload, this.JWT_SECRET, { expiresIn: this.JWT_EXPIRES_IN });
+    const refreshToken = jwt.sign(payload, this.JWT_REFRESH_SECRET, { expiresIn: this.JWT_REFRESH_EXPIRES_IN });
+
+    await prisma.refreshToken.deleteMany({ where: { user: user.id_user } });
+
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
+    expiresAt.setDate(expiresAt.getDate() + 7);
 
     await prisma.refreshToken.create({
       data: {
         token: refreshToken,
-        userId: user.id,
+        user: user.id_user,
         createdAt: new Date(),
         expiresAt,
       },
@@ -177,25 +205,24 @@ class AuthService {
     try {
       const decoded = jwt.verify(refreshToken, this.JWT_REFRESH_SECRET);
 
-      // Check if token exists and is not expired in database
       const storedToken = await prisma.refreshToken.findFirst({
         where: {
           token: refreshToken,
-          userId: parseInt(decoded.sub),
+          user: parseInt(decoded.sub),
           expiresAt: {
             gt: new Date(),
           },
         },
         include: {
-          user: {
+          userRelation: {
             include: {
               userRoles: {
                 include: {
-                  role: {
+                  roleRelation: {
                     include: {
                       rolePermissions: {
                         include: {
-                          permission: true,
+                          permissionRelation: true,
                         },
                       },
                     },
@@ -211,19 +238,16 @@ class AuthService {
         throw new Error("Invalid refresh token");
       }
 
-      const user = storedToken.user;
-      const roles = user.userRoles.map((ur) => ur.role);
-      const permissions = roles.flatMap((role) =>
-        role.rolePermissions.map((rp) => rp.permission)
-      );
+      const user = storedToken.userRelation;
+      const roles = user.userRoles.map((ur) => ur.roleRelation);
+      const permissions = roles.flatMap((r) => r.rolePermissions.map((rp) => rp.permissionRelation));
 
       const payload = {
-        sub: user.id.toString(),
+        sub: user.id_user.toString(),
         roles: roles.map((r) => r.name || ""),
         permissions: permissions.map((p) => p.name || ""),
       };
 
-      // Generate new access token
       const newAccessToken = jwt.sign(payload, this.JWT_SECRET, {
         expiresIn: this.JWT_EXPIRES_IN,
       });
@@ -236,7 +260,6 @@ class AuthService {
 
   async logout(refreshToken, accessToken) {
     try {
-      // Find and delete the refresh token
       const token = await prisma.refreshToken.findFirst({
         where: {
           token: refreshToken,
@@ -244,14 +267,12 @@ class AuthService {
       });
 
       if (token) {
-        // Delete the refresh token
         await prisma.refreshToken.delete({
           where: {
-            id: token.id,
+            id_refresh_token: token.id_refresh_token,
           },
         });
 
-        // Store access token in revoked tokens
         await prisma.revokedToken.create({
           data: {
             token: accessToken,
@@ -266,15 +287,15 @@ class AuthService {
 
   async getUser(userId) {
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id_user: userId },
       include: {
         userRoles: {
           include: {
-            role: {
+            roleRelation: {
               include: {
                 rolePermissions: {
                   include: {
-                    permission: true,
+                    permissionRelation: true,
                   },
                 },
               },
@@ -288,19 +309,19 @@ class AuthService {
       throw new Error("User not found");
     }
 
-    const roles = user.userRoles.map((ur) => ur.role);
-    const permissions = roles.flatMap((role) =>
-      role.rolePermissions.map((rp) => rp.permission)
+    const roles = user.userRoles.map((ur) => ur.roleRelation);
+    const permissions = roles.flatMap((r) =>
+      r.rolePermissions.map((rp) => rp.permissionRelation)
     );
 
     return {
-      id: user.id,
+      id: user.id_user,
       email: user.email,
       name: user.name,
       avatar_url: user.avatarUrl,
       display_name: user.displayName,
-      roles: roles.map((r) => ({ id: r.id, name: r.name || "" })),
-      permissions: permissions.map((p) => ({ id: p.id, name: p.name || "" })),
+      roles: roles.map((r) => ({ id: r.id_role, name: r.name || "" })),
+      permissions: permissions.map((p) => ({ id: p.id_permission, name: p.name || "" })),
     };
   }
 
@@ -310,7 +331,7 @@ class AuthService {
     }
 
     const user = await prisma.user.findUnique({
-      where: { userLogin: email },
+      where: { email: email },
     });
 
     return {

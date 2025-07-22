@@ -1,95 +1,120 @@
 const { Router } = require("express");
+const { z } = require("zod");
 const { AuthService } = require("../../services/auth/auth.service");
 const { authMiddleware } = require("../../middleware/auth/auth.middleware");
+const { validate } = require("../../middleware/validation.middleware");
 
-const router = Router();
+const authRouter = Router();
 const authService = new AuthService();
 
-//## Endpoint Register
-router.post("/register", async (req, res) => {
-  try {
-    const {
-      email,
-      password,
-      name,
-      role,
-      avatar_url,
-      display_name,
-      gender,
-      birth_date,
-      asset_user_id,
-    } = req.body;
+// Schemas for validation
+const registerSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+    password: z.string().min(6),
+    name: z.string(),
+    role: z.string().optional(),
+    avatar_url: z.string().url().optional(),
+    display_name: z.string().optional(),
+    gender: z.string().optional(),
+    birth_date: z.string().optional(),
+    asset_user_id: z.string().optional(),
+  }),
+});
 
-    const user = await authService.register(
-      email,
-      password,
-      name,
-      role,
-      avatar_url,
-      display_name,
-      gender,
-      birth_date,
-      asset_user_id
-    );
+const loginSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+    password: z.string(),
+  }),
+});
+
+const verify2FASchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+    token: z.string().length(6),
+  }),
+});
+
+const refreshTokenSchema = z.object({
+  body: z.object({
+    refreshToken: z.string(),
+  }),
+});
+
+//## Endpoint Register
+authRouter.post("/register", validate(registerSchema), async (req, res, next) => {
+  try {
+    const user = await authService.register(req.body);
     res.status(201).json(user);
   } catch (error) {
-    res.status(400).json({ message: error?.message || "Registration failed" });
+    next(error);
   }
 });
 
 //## Endpoint Login
-router.post("/login", async (req, res) => {
+authRouter.post("/login", validate(loginSchema), async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const tokens = await authService.login(email, password);
+    const result = await authService.login(email, password);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+//## Endpoint Verify 2FA
+authRouter.post('/verify-2fa', validate(verify2FASchema), async (req, res, next) => {
+  try {
+    const { email, token } = req.body;
+    const tokens = await authService.verifyTwoFactorToken(email, token);
     res.json(tokens);
   } catch (error) {
-    res.status(401).json({ message: error?.message || "Login failed" });
+    next(error);
   }
 });
 
 //## Endpoint Refresh Token
-router.post("/refresh-token", async (req, res) => {
+authRouter.post("/refresh-token", validate(refreshTokenSchema), async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
     const result = await authService.refreshToken(refreshToken);
     res.json(result);
   } catch (error) {
-    res.status(401).json({ message: error?.message || "Token refresh failed" });
+    next(error);
   }
 });
 
 //## Endpoint Logout
-router.post("/logout", async (req, res) => {
+authRouter.post("/logout", authMiddleware, async (req, res, next) => {
   try {
     const { refreshToken, accessToken } = req.body;
     await authService.logout(refreshToken, accessToken);
     res.json({ message: "Logged out successfully" });
   } catch (error) {
-    res.status(400).json({ message: error?.message || "Logout failed" });
+    next(error);
   }
 });
 
 //## Endpoint Me
-router.get("/me", authMiddleware, async (req, res) => {
+authRouter.get("/me", authMiddleware, async (req, res, next) => {
   try {
-    // req.user is guaranteed to exist after authMiddleware
-    const user = await authService.getUser(parseInt(req.user.id));
+    const user = await authService.getUser(parseInt(req.user.sub));
     res.json(user);
   } catch (error) {
-    res.status(404).json({ message: error?.message || "User not found" });
+    next(error);
   }
 });
 
 //## Endpoint Check Email
-router.get("/check-email", async (req, res) => {
+authRouter.get("/check-email", async (req, res, next) => {
   try {
     const { email } = req.query;
     const result = await authService.checkEmailExists(email);
     res.json(result);
   } catch (error) {
-    res.status(400).json({ message: error?.message || "Email check failed" });
+    next(error);
   }
 });
 
-module.exports = router;
+module.exports = { authRouter };

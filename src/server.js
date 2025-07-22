@@ -3,7 +3,7 @@ const cors = require("cors");
 const morgan = require("morgan");
 const dotenv = require("dotenv");
 require("express-async-errors");
-const authRouter = require("./routes/auth/auth.routes");
+const { authRouter } = require("./routes/auth/auth.routes");
 const { ZodError } = require("zod");
 
 // Load environment variables
