@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require("../../lib/prisma");
+
+// Use mesma constante do auth.service.js para garantir consistência
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
 const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -17,10 +20,11 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: 'Token has been revoked' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {
+    console.error('JWT verification error:', error.message);
     return res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
