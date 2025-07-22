@@ -1,0 +1,68 @@
+name: garage
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-garage
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: garage_db
+    ports:
+      - "3311:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - garage-network
+
+  phpmyadmin_garage:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin_garage
+    environment:
+      PMA_HOST: mysql-garage
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "9015:80"
+    depends_on:
+      - mysql
+    networks:
+      - garage-network
+
+  srv_node_garage:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=mysql://root:${MYSQL_ROOT_PASSWORD}@mysql-garage:3306/garage_db
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN}
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "3015:3005"
+    depends_on:
+      - mysql
+    networks:
+      - garage-network
+
+  nginx_garage:
+    image: nginx:latest
+    container_name: nginx_garage
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - garage-network
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+networks:
+  garage-network:
+    external: true
+
+volumes:
+  mysql_data:
+    external: false

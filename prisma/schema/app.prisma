@@ -1,0 +1,142 @@
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  name     String
+  role     String @default("USER") // USER, ADMIN
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  passwordResets PasswordReset[]
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  createdAt DateTime @default(now())
+  
+  // Relation to User
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}</TargetContent>
+<ReplacementContent>// Authentication and User models
+
+model User {
+  id_user      Int     @id @default(autoincrement()) @map("id_user")
+  uid          String  @unique @map("uid") @db.VarChar(36)
+  name         String? @map("name") @db.VarChar(200)
+  display_name String? @map("display_name") @db.VarChar(200)
+  user_login   String? @unique @map("user_login") @db.VarChar(200)
+  email        String? @unique @map("email") @db.VarChar(200)
+  avatar_url   String? @map("avatar_url") @db.Text
+  password     String? @map("password") @db.VarChar(200)
+  gender       String? @map("gender") @db.VarChar(50)
+  birth_date   DateTime? @map("birth_date") @db.Date
+  asset_user_id Int? @map("asset_user_id")
+  
+  // Relations
+  assetUser     User?     @relation("UserToAssetUser", fields: [asset_user_id], references: [id_user], onDelete: SetNull)
+  assetUsers    User[]    @relation("UserToAssetUser")
+  userMeta      UserMeta[]
+  userRoles     UserRole[]
+  refreshTokens RefreshToken[]
+  socialTokens  SocialToken[]
+
+  @@map("users")
+}
+
+model UserMeta {
+  id_user_meta Int     @id @default(autoincrement()) @map("id_user_meta")
+  user         Int     @map("user")
+  meta_key     String? @map("meta_key") @db.VarChar(100)
+  meta_value   String? @map("meta_value") @db.LongText
+  
+  // Relations
+  userRelation User    @relation(fields: [user], references: [id_user])
+
+  @@map("user_meta")
+}
+
+model Permission {
+  id_permission   Int     @id @default(autoincrement()) @map("id_permission")
+  permission_name String? @map("permission_name") @db.VarChar(45)
+  
+  // Relations
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model Role {
+  id_role     Int     @id @default(autoincrement()) @map("id_role")
+  role        String? @map("role") @db.VarChar(45)
+  
+  // Relations
+  userRoles   UserRole[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id_user_role Int   @id @default(autoincrement()) @map("id_user_role")
+  user         Int   @map("user")
+  role         Int   @map("role")
+  
+  // Relations
+  userRelation User  @relation(fields: [user], references: [id_user])
+  roleRelation Role  @relation(fields: [role], references: [id_role])
+
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id_role_permissions Int   @id @default(autoincrement()) @map("id_role_permissions")
+  role                Int   @map("role")
+  permission          Int   @map("permission")
+  
+  // Relations
+  roleRelation        Role        @relation(fields: [role], references: [id_role])
+  permissionRelation  Permission  @relation(fields: [permission], references: [id_permission])
+
+  @@map("role_permissions")
+}
+
+model RefreshToken {
+  id_refresh_token Int      @id @default(autoincrement()) @map("id_refresh_token")
+  created_at       DateTime @map("created_at") @db.DateTime(3)
+  expires_at       DateTime @map("expires_at") @db.DateTime(3)
+  refresh_token    String   @map("refresh_token") @db.Text
+  user             Int      @map("user")
+  
+  // Relations
+  userRelation     User     @relation(fields: [user], references: [id_user])
+
+  @@map("refresh_tokens")
+}
+
+model RevokedToken {
+  id_revoked_token Int      @id @default(autoincrement()) @map("id_revoked_token")
+  token            String?  @map("token") @db.Text
+  revoked_at       DateTime @map("revoked_at") @db.DateTime(3)
+
+  @@map("revoked_tokens")
+}
+
+model SocialToken {
+  id_social_token           Int     @id @default(autoincrement()) @map("id_social_token")
+  token                     String? @map("token") @db.Text
+  platform                  String? @map("platform") @db.VarChar(45)
+  platform_id               String? @map("platform_id") @db.Text
+  scope                     String? @map("scope") @db.Text
+  platform_user_name        String? @map("platform_user_name") @db.VarChar(45)
+  platform_email            String? @map("platform_email") @db.VarChar(100)
+  platform_profile_picture_url String? @map("platform_profile_picture_url") @db.Text
+  user                      Int     @map("user")
+  
+  // Relations
+  userRelation              User    @relation(fields: [user], references: [id_user])
+
+  @@map("social_tokens")
+}
