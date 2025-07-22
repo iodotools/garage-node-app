@@ -43,14 +43,18 @@ const refreshTokenSchema = z.object({
 });
 
 //## Endpoint Register
-authRouter.post("/register", validate(registerSchema), async (req, res, next) => {
-  try {
-    const user = await authService.register(req.body);
-    res.status(201).json(user);
-  } catch (error) {
-    next(error);
+authRouter.post(
+  "/register",
+  validate(registerSchema),
+  async (req, res, next) => {
+    try {
+      const user = await authService.register(req.body);
+      res.status(201).json(user);
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 //## Endpoint Login
 authRouter.post("/login", validate(loginSchema), async (req, res, next) => {
@@ -64,26 +68,34 @@ authRouter.post("/login", validate(loginSchema), async (req, res, next) => {
 });
 
 //## Endpoint Verify 2FA
-authRouter.post('/verify-2fa', validate(verify2FASchema), async (req, res, next) => {
-  try {
-    const { email, token } = req.body;
-    const tokens = await authService.verifyTwoFactorToken(email, token);
-    res.json(tokens);
-  } catch (error) {
-    next(error);
+authRouter.post(
+  "/verify-2fa",
+  validate(verify2FASchema),
+  async (req, res, next) => {
+    try {
+      const { email, token } = req.body;
+      const tokens = await authService.verifyTwoFactorToken(email, token);
+      res.json(tokens);
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 //## Endpoint Refresh Token
-authRouter.post("/refresh-token", validate(refreshTokenSchema), async (req, res, next) => {
-  try {
-    const { refreshToken } = req.body;
-    const result = await authService.refreshToken(refreshToken);
-    res.json(result);
-  } catch (error) {
-    next(error);
+authRouter.post(
+  "/refresh-token",
+  validate(refreshTokenSchema),
+  async (req, res, next) => {
+    try {
+      const { refreshToken } = req.body;
+      const result = await authService.refreshToken(refreshToken);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 //## Endpoint Logout
 authRouter.post("/logout", authMiddleware, async (req, res, next) => {
