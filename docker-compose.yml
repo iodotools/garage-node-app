@@ -47,18 +47,6 @@ services:
     networks:
       - garage-network
 
-  nginx_garage:
-    image: nginx:latest
-    container_name: nginx_garage
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - garage-network
-    volumes:
-      - .:/app
-      - /app/node_modules
-
 networks:
   garage-network:
     external: true
