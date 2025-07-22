@@ -184,17 +184,19 @@ class AuthService {
     const accessToken = jwt.sign(payload, this.JWT_SECRET, { expiresIn: this.JWT_EXPIRES_IN });
     const refreshToken = jwt.sign(payload, this.JWT_REFRESH_SECRET, { expiresIn: this.JWT_REFRESH_EXPIRES_IN });
 
-    await prisma.refreshToken.deleteMany({ where: { user: user.id_user } });
+    await prisma.refreshToken.deleteMany({
+        where: { user: user.id_user },
+      });
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     await prisma.refreshToken.create({
       data: {
-        token: refreshToken,
+        refresh_token: refreshToken,
         user: user.id_user,
-        createdAt: new Date(),
-        expiresAt,
+        created_at: new Date(),
+        expires_at: expiresAt,
       },
     });
 
@@ -207,9 +209,9 @@ class AuthService {
 
       const storedToken = await prisma.refreshToken.findFirst({
         where: {
-          token: refreshToken,
+          refresh_token: refreshToken,
           user: parseInt(decoded.sub),
-          expiresAt: {
+          expires_at: {
             gt: new Date(),
           },
         },
@@ -235,10 +237,11 @@ class AuthService {
       });
 
       if (!storedToken) {
-        throw new Error("Invalid refresh token");
+        throw new Error("Invalid or expired refresh token");
       }
 
       const user = storedToken.userRelation;
+
       const roles = user.userRoles.map((ur) => ur.roleRelation);
       const permissions = roles.flatMap((r) => r.rolePermissions.map((rp) => rp.permissionRelation));
 
@@ -260,9 +263,9 @@ class AuthService {
 
   async logout(refreshToken, accessToken) {
     try {
-      const token = await prisma.refreshToken.findFirst({
+      const token = await prisma.refreshToken.findUnique({
         where: {
-          token: refreshToken,
+          refresh_token: refreshToken,
         },
       });
 
@@ -274,11 +277,11 @@ class AuthService {
         });
 
         await prisma.revokedToken.create({
-          data: {
-            token: accessToken,
-            revokedAt: new Date(),
-          },
-        });
+        data: {
+          token: accessToken,
+          revoked_at: new Date(),
+        },
+      });
       }
     } catch (error) {
       throw new Error("Error during logout");
