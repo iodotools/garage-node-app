@@ -71,7 +71,7 @@ class AuthService {
         name: name,
         userRoles: {
           create: {
-            role: {
+            roleRelation: {
               connect: {
                 id_role: roleObj.id_role,
               },
