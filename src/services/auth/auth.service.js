@@ -2,8 +2,8 @@ const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
 const { v4: uuidv4 } = require("uuid");
 const jwt = require("jsonwebtoken");
-const crypto = require('crypto');
-const { EmailService } = require('../email/email.service');
+const crypto = require("crypto");
+const { EmailService } = require("../email/email.service");
 
 const prisma = require("../../lib/prisma");
 
@@ -74,34 +74,17 @@ class AuthService {
           },
         },
       },
-      include: {
-        userRoles: {
-          include: {
-            roleRelation: {
-              include: {
-                rolePermissions: {
-                  include: {
-                    permissionRelation: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
     });
-
-    const roles = user.userRoles.map((ur) => ur.roleRelation);
-    const permissions = roles.flatMap((r) =>
-      r.rolePermissions.map((rp) => rp.permissionRelation)
-    );
-
+    return user;
     return {
       id: user.id_user,
       email: user.email || "",
       name: user.name,
       roles: roles.map((r) => ({ id: r.id_role, name: r.name || "" })),
-      permissions: permissions.map((p) => ({ id: p.id_permission, name: p.name || "" })),
+      permissions: permissions.map((p) => ({
+        id: p.id_permission,
+        name: p.name || "",
+      })),
     };
   }
 
@@ -110,7 +93,11 @@ class AuthService {
       where: { email: email },
     });
 
-    if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
+    if (
+      !user ||
+      !user.password ||
+      !(await bcrypt.compare(password, user.password))
+    ) {
       throw new Error("Invalid credentials");
     }
 
@@ -129,64 +116,72 @@ class AuthService {
 
     await this.emailService.sendMail(
       user.email,
-      'Your 2FA Code',
+      "Your 2FA Code",
       `Your 2FA code is: ${twoFactorToken}`,
       `<h3>Your 2FA code is: ${twoFactorToken}</h3>`
     );
 
-    return { message: '2FA code sent to your email.' };
+    return { message: "2FA code sent to your email." };
   }
 
   async verifyTwoFactorToken(email, token) {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error("User not found");
 
     const twoFactorToken = await prisma.twoFactorToken.findFirst({
       where: { user: user.id_user, token: token },
     });
 
-    if (!twoFactorToken) throw new Error('Invalid 2FA token');
+    if (!twoFactorToken) throw new Error("Invalid 2FA token");
 
     if (new Date(twoFactorToken.expires) < new Date()) {
-      throw new Error('2FA token has expired');
+      throw new Error("2FA token has expired");
     }
 
-    await prisma.twoFactorToken.delete({ where: { id_two_factor_token: twoFactorToken.id_two_factor_token } });
+    await prisma.twoFactorToken.delete({
+      where: { id_two_factor_token: twoFactorToken.id_two_factor_token },
+    });
 
     const userWithRoles = await prisma.user.findUnique({
-        where: { id_user: user.id_user },
-        include: {
-            userRoles: {
-                include: {
-                    roleRelation: {
-                        include: {
-                            rolePermissions: {
-                                include: {
-                                    permissionRelation: true,
-                                },
-                            },
-                        },
-                    },
+      where: { id_user: user.id_user },
+      include: {
+        userRoles: {
+          include: {
+            roleRelation: {
+              include: {
+                rolePermissions: {
+                  include: {
+                    permissionRelation: true,
+                  },
                 },
+              },
             },
+          },
         },
+      },
     });
 
     const roles = userWithRoles.userRoles.map((ur) => ur.roleRelation);
-    const permissions = roles.flatMap((r) => r.rolePermissions.map((rp) => rp.permissionRelation));
+    const permissions = roles.flatMap((r) =>
+      r.rolePermissions.map((rp) => rp.permissionRelation)
+    );
 
     const payload = {
       sub: user.id_user.toString(),
-      roles: roles.map((r) => r.name || ''),
-      permissions: permissions.map((p) => p.name || ''),
+      roles: roles.map((r) => r.name || ""),
+      permissions: permissions.map((p) => p.name || ""),
     };
 
-    const accessToken = jwt.sign(payload, this.JWT_SECRET, { expiresIn: this.JWT_EXPIRES_IN });
-    const refreshToken = jwt.sign(payload, this.JWT_REFRESH_SECRET, { expiresIn: this.JWT_REFRESH_EXPIRES_IN });
+    const accessToken = jwt.sign(payload, this.JWT_SECRET, {
+      expiresIn: this.JWT_EXPIRES_IN,
+    });
+    const refreshToken = jwt.sign(payload, this.JWT_REFRESH_SECRET, {
+      expiresIn: this.JWT_REFRESH_EXPIRES_IN,
+    });
 
     await prisma.refreshToken.deleteMany({
-        where: { user: user.id_user },
-      });
+      where: { user: user.id_user },
+    });
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
@@ -243,7 +238,9 @@ class AuthService {
       const user = storedToken.userRelation;
 
       const roles = user.userRoles.map((ur) => ur.roleRelation);
-      const permissions = roles.flatMap((r) => r.rolePermissions.map((rp) => rp.permissionRelation));
+      const permissions = roles.flatMap((r) =>
+        r.rolePermissions.map((rp) => rp.permissionRelation)
+      );
 
       const payload = {
         sub: user.id_user.toString(),
@@ -277,11 +274,10 @@ class AuthService {
         });
 
         await prisma.revokedToken.create({
-        data: {
-          token: accessToken,
-          revoked_at: new Date(),
-        },
-      });
+          data: {
+            token: accessToken,
+          },
+        });
       }
     } catch (error) {
       throw new Error("Error during logout");
@@ -290,15 +286,15 @@ class AuthService {
 
   async getUser(userId) {
     const user = await prisma.user.findUnique({
-      where: { id_user: userId },
+      where: { id: userId },
       include: {
         userRoles: {
           include: {
-            roleRelation: {
+            role: {
               include: {
                 rolePermissions: {
                   include: {
-                    permissionRelation: true,
+                    permission: true,
                   },
                 },
               },
@@ -312,19 +308,19 @@ class AuthService {
       throw new Error("User not found");
     }
 
-    const roles = user.userRoles.map((ur) => ur.roleRelation);
-    const permissions = roles.flatMap((r) =>
-      r.rolePermissions.map((rp) => rp.permissionRelation)
+    const roles = user.userRoles.map((ur) => ur.role);
+    const permissions = roles.flatMap((role) =>
+      role.rolePermissions.map((rp) => rp.permission)
     );
 
     return {
-      id: user.id_user,
+      id: user.id,
       email: user.email,
       name: user.name,
       avatar_url: user.avatarUrl,
       display_name: user.displayName,
-      roles: roles.map((r) => ({ id: r.id_role, name: r.name || "" })),
-      permissions: permissions.map((p) => ({ id: p.id_permission, name: p.name || "" })),
+      roles: roles.map((r) => ({ id: r.id, name: r.name || "" })),
+      permissions: permissions.map((p) => ({ id: p.id, name: p.name || "" })),
     };
   }
 
