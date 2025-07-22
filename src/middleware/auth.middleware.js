@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../services/auth/auth.service");
-const prisma = require("../../lib/prisma");
+const prisma = require("../lib/prisma");
 
 /**
  * Middleware de autenticação que verifica o token JWT
