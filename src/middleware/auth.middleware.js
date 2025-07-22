@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const { JWT_SECRET } = require("../services/auth/auth.service");
+const prisma = require("../../lib/prisma");
 
 const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -14,19 +14,16 @@ const authMiddleware = async (req, res, next) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const revokedToken = await prisma.revokedToken.findUnique({
+    const revokedToken = await prisma.revokedToken.findFirst({
       where: { token },
     });
     if (revokedToken) {
       return res.status(401).json({ message: "Token has been revoked" });
     }
 
-    console.log("using:" + (process.env.JWT_SECRET || "your-secret-key"));
+    console.log("using:" + JWT_SECRET);
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "your-secret-key"
-    );
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {

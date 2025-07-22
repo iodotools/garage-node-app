@@ -7,12 +7,16 @@ const { EmailService } = require("../email/email.service");
 
 const prisma = require("../../lib/prisma");
 
+// Exportar as chaves para uso em outros arquivos
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key";
+
 class AuthService {
   constructor() {
     this.emailService = new EmailService();
-    this.JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
-    this.JWT_REFRESH_SECRET =
-      process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key";
+    // Usar as constantes exportadas
+    this.JWT_SECRET = JWT_SECRET;
+    this.JWT_REFRESH_SECRET = JWT_REFRESH_SECRET;
     this.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "15m";
     this.JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
   }
@@ -364,4 +368,4 @@ class AuthService {
   }
 }
 
-module.exports = { AuthService };
+module.exports = { AuthService, JWT_SECRET, JWT_REFRESH_SECRET };
