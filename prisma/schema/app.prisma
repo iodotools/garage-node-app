@@ -35,7 +35,7 @@ model UserMeta {
   meta_value   String? @map("meta_value") @db.LongText
 
   // Relations
-  userRelation User    @relation(fields: [user], references: [id_user])
+  userRelation User    @relation(fields: [user], references: [id])
 
   @@map("user_meta")
 }
@@ -67,7 +67,7 @@ model UserRole {
   role         Int   @map("role")
 
   // Relations
-  userRelation User  @relation(fields: [user], references: [id_user])
+  userRelation User  @relation(fields: [user], references: [id])
   roleRelation Role  @relation(fields: [role], references: [id_role])
 
   @@map("user_roles")
@@ -93,7 +93,7 @@ model RefreshToken {
   user             Int      @map("user")
 
   // Relations
-  userRelation     User     @relation(fields: [user], references: [id_user])
+  userRelation     User     @relation(fields: [user], references: [id])
 
   @@map("refresh_tokens")
 }
@@ -118,7 +118,7 @@ model SocialToken {
   user                      Int     @map("user")
 
   // Relations
-  userRelation              User    @relation(fields: [user], references: [id_user])
+  userRelation              User    @relation(fields: [user], references: [id])
 
   @@map("social_tokens")
 }
