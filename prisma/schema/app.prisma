@@ -21,30 +21,6 @@ model PasswordReset {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model User {
-  id_user      Int     @id @default(autoincrement()) @map("id_user")
-  uid          String  @unique @map("uid") @db.VarChar(36)
-  name         String? @map("name") @db.VarChar(200)
-  display_name String? @map("display_name") @db.VarChar(200)
-  user_login   String? @unique @map("user_login") @db.VarChar(200)
-  email        String? @unique @map("email") @db.VarChar(200)
-  avatar_url   String? @map("avatar_url") @db.Text
-  password     String? @map("password") @db.VarChar(200)
-  gender       String? @map("gender") @db.VarChar(50)
-  birth_date   DateTime? @map("birth_date") @db.Date
-  asset_user_id Int? @map("asset_user_id")
-
-  // Relations
-  assetUser     User?     @relation("UserToAssetUser", fields: [asset_user_id], references: [id_user], onDelete: SetNull)
-  assetUsers    User[]    @relation("UserToAssetUser")
-  userMeta      UserMeta[]
-  userRoles     UserRole[]
-  refreshTokens RefreshToken[]
-  socialTokens  SocialToken[]
-
-  @@map("users")
-}
-
 model UserMeta {
   id_user_meta Int     @id @default(autoincrement()) @map("id_user_meta")
   user         Int     @map("user")
