@@ -1,13 +1,3 @@
-model PasswordReset {
-  id        Int      @id @default(autoincrement())
-  token     String   @unique
-  createdAt DateTime @default(now())
-
-  // Relation to User
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id_user], onDelete: Cascade)
-}
-
 model User {
   id_user      Int     @id @default(autoincrement()) @map("id_user")
   uid          String  @unique @map("uid") @db.VarChar(36)
