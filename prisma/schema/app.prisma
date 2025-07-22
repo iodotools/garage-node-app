@@ -4,7 +4,7 @@ model User {
   password String
   name     String
   role     String @default("USER") // USER, ADMIN
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -15,12 +15,11 @@ model PasswordReset {
   id        Int      @id @default(autoincrement())
   token     String   @unique
   createdAt DateTime @default(now())
-  
+
   // Relation to User
   userId    Int
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}</TargetContent>
-<ReplacementContent>// Authentication and User models
+}
 
 model User {
   id_user      Int     @id @default(autoincrement()) @map("id_user")
@@ -34,7 +33,7 @@ model User {
   gender       String? @map("gender") @db.VarChar(50)
   birth_date   DateTime? @map("birth_date") @db.Date
   asset_user_id Int? @map("asset_user_id")
-  
+
   // Relations
   assetUser     User?     @relation("UserToAssetUser", fields: [asset_user_id], references: [id_user], onDelete: SetNull)
   assetUsers    User[]    @relation("UserToAssetUser")
@@ -51,7 +50,7 @@ model UserMeta {
   user         Int     @map("user")
   meta_key     String? @map("meta_key") @db.VarChar(100)
   meta_value   String? @map("meta_value") @db.LongText
-  
+
   // Relations
   userRelation User    @relation(fields: [user], references: [id_user])
 
@@ -61,7 +60,7 @@ model UserMeta {
 model Permission {
   id_permission   Int     @id @default(autoincrement()) @map("id_permission")
   permission_name String? @map("permission_name") @db.VarChar(45)
-  
+
   // Relations
   rolePermissions RolePermission[]
 
@@ -71,7 +70,7 @@ model Permission {
 model Role {
   id_role     Int     @id @default(autoincrement()) @map("id_role")
   role        String? @map("role") @db.VarChar(45)
-  
+
   // Relations
   userRoles   UserRole[]
   rolePermissions RolePermission[]
@@ -83,7 +82,7 @@ model UserRole {
   id_user_role Int   @id @default(autoincrement()) @map("id_user_role")
   user         Int   @map("user")
   role         Int   @map("role")
-  
+
   // Relations
   userRelation User  @relation(fields: [user], references: [id_user])
   roleRelation Role  @relation(fields: [role], references: [id_role])
@@ -95,7 +94,7 @@ model RolePermission {
   id_role_permissions Int   @id @default(autoincrement()) @map("id_role_permissions")
   role                Int   @map("role")
   permission          Int   @map("permission")
-  
+
   // Relations
   roleRelation        Role        @relation(fields: [role], references: [id_role])
   permissionRelation  Permission  @relation(fields: [permission], references: [id_permission])
@@ -109,7 +108,7 @@ model RefreshToken {
   expires_at       DateTime @map("expires_at") @db.DateTime(3)
   refresh_token    String   @map("refresh_token") @db.Text
   user             Int      @map("user")
-  
+
   // Relations
   userRelation     User     @relation(fields: [user], references: [id_user])
 
@@ -134,7 +133,7 @@ model SocialToken {
   platform_email            String? @map("platform_email") @db.VarChar(100)
   platform_profile_picture_url String? @map("platform_profile_picture_url") @db.Text
   user                      Int     @map("user")
-  
+
   // Relations
   userRelation              User    @relation(fields: [user], references: [id_user])
 
