@@ -111,7 +111,7 @@ authRouter.post("/logout", authMiddleware, async (req, res, next) => {
 //## Endpoint Me
 authRouter.get("/me", authMiddleware, async (req, res, next) => {
   try {
-    const user = await authService.getUser(parseInt(req.user.sub));
+    const user = await authService.getUser(parseInt(req.user.id_user));
     res.json(user);
   } catch (error) {
     next(error);

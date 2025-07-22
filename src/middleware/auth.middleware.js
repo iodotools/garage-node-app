@@ -26,9 +26,9 @@ const authMiddleware = async (req, res, next) => {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = {
-      id: decoded.sub,
+      id_user: decoded.sub,
       roles: decoded.roles,
-      permissions: decoded.permissions
+      permissions: decoded.permissions,
     };
     next();
   } catch (error) {
