@@ -27,7 +27,7 @@ class AuthService {
   ) {
     // Check if user exists by userLogin (using email as userLogin)
     const existingUser = await prisma.user.findUnique({
-      where: { userLogin: email },
+      where: { email: email },
     });
 
     if (existingUser) {
@@ -106,7 +106,7 @@ class AuthService {
 
   async login(email, password) {
     const user = await prisma.user.findUnique({
-      where: { userLogin: email },
+      where: { email: email },
       include: {
         userRoles: {
           include: {
@@ -310,7 +310,7 @@ class AuthService {
     }
 
     const user = await prisma.user.findUnique({
-      where: { userLogin: email },
+      where: { email: email },
     });
 
     return {
