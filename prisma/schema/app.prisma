@@ -1,3 +1,13 @@
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  // Relation to User
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model User {
   id_user      Int     @id @default(autoincrement()) @map("id_user")
   uid          String  @unique @map("uid") @db.VarChar(36)
@@ -10,27 +20,16 @@ model User {
   gender       String? @map("gender") @db.VarChar(50)
   birth_date   DateTime? @map("birth_date") @db.Date
   asset_user_id Int? @map("asset_user_id")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   // Relations
+  assetUser     User?     @relation("UserToAssetUser", fields: [asset_user_id], references: [id_user], onDelete: SetNull)
+  assetUsers    User[]    @relation("UserToAssetUser")
   userMeta      UserMeta[]
   userRoles     UserRole[]
   refreshTokens RefreshToken[]
   socialTokens  SocialToken[]
-  passwordResets PasswordReset[]
 
   @@map("users")
-}
-
-model PasswordReset {
-  id        Int      @id @default(autoincrement())
-  token     String   @unique
-  createdAt DateTime @default(now())
-
-  // Relation to User
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserMeta {
@@ -40,7 +39,7 @@ model UserMeta {
   meta_value   String? @map("meta_value") @db.LongText
 
   // Relations
-  userRelation User    @relation(fields: [user], references: [id])
+  userRelation User    @relation(fields: [user], references: [id_user])
 
   @@map("user_meta")
 }
@@ -72,7 +71,7 @@ model UserRole {
   role         Int   @map("role")
 
   // Relations
-  userRelation User  @relation(fields: [user], references: [id])
+  userRelation User  @relation(fields: [user], references: [id_user])
   roleRelation Role  @relation(fields: [role], references: [id_role])
 
   @@map("user_roles")
@@ -98,7 +97,7 @@ model RefreshToken {
   user             Int      @map("user")
 
   // Relations
-  userRelation     User     @relation(fields: [user], references: [id])
+  userRelation     User     @relation(fields: [user], references: [id_user])
 
   @@map("refresh_tokens")
 }
@@ -123,7 +122,7 @@ model SocialToken {
   user                      Int     @map("user")
 
   // Relations
-  userRelation              User    @relation(fields: [user], references: [id])
+  userRelation              User    @relation(fields: [user], references: [id_user])
 
   @@map("social_tokens")
 }
