@@ -46,7 +46,7 @@ class AuthService {
     const uid = uuidv4();
 
     const roleObj = await prisma.role.findFirst({
-      where: { name: role },
+      where: { role: role },
     });
 
     if (!roleObj) {
