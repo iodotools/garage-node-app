@@ -19,7 +19,7 @@ app.use(morgan("dev"));
 app.use(express.json());
 
 // aUTH Routes
-app.use("/api/auth", authRouter);
+app.use("/auth", authRouter);
 
 // Health check route
 app.get("/health", (req, res) => {
