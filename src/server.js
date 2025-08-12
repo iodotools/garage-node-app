@@ -1,9 +1,16 @@
+//Patch to BigInt to prevent JSON serialization errors
+BigInt.prototype.toJSON = function () {
+  return this.toString();
+};
+
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const dotenv = require("dotenv");
 require("express-async-errors");
 const { authRouter } = require("./routes/auth/auth.routes");
+const { contenGenRouter } = require("./routes/content-gen/content_gen");
+const { agentsRouter } = require("./routes/agents/agents.routes");
 const { ZodError } = require("zod");
 
 // Load environment variables
@@ -20,6 +27,12 @@ app.use(express.json());
 
 // aUTH Routes
 app.use("/auth", authRouter);
+
+// Content Generation Routes
+app.use("/content-gen", contenGenRouter);
+
+// Agents Routes
+app.use("/agents", agentsRouter);
 
 // Health check route
 app.get("/health", (req, res) => {

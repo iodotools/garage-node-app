@@ -16,7 +16,7 @@ model User {
   userRoles     UserRole[]
   refreshTokens RefreshToken[]
   socialTokens  SocialToken[]
-  twoFactorToken TwoFactorToken? 
+  twoFactorToken TwoFactorToken?
 
   @@map("users")
 }
@@ -111,3 +111,47 @@ model TwoFactorToken {
 
   @@map("two_factor_tokens")
 }
+
+model Agente {
+  id_agente    BigInt   @id @default(autoincrement()) @map("id_agente")
+  nome         String   @map("nome") @db.VarChar(500)
+  docs_key     String   @map("docs_key") @db.VarChar(500)
+  tipo         String   @map("tipo") @db.VarChar(150)
+  agente_props String   @map("agente_props") @db.LongText
+  created_at   DateTime @default(now()) @map("created_at")
+  status       String   @map("status") @db.VarChar(200)
+
+  conteudos_titulo Conteudo[] @relation("AgenteTitulo")
+  conteudos_texto  Conteudo[] @relation("AgenteTexto")
+  conteudos_imagem Conteudo[] @relation("AgenteImagem")
+
+  @@map("agentes")
+}
+
+model Conteudo {
+  id_conteudo   BigInt   @id @default(autoincrement()) @map("id_conteudo")
+  uuid          String   @map("uuid") @db.VarChar(64)
+  cliente BigInt   @map("cliente")
+  name          String?  @map("name") @db.Text
+  editoria      String   @map("editoria") @db.VarChar(250)
+  task_id       String   @map("task_id") @db.VarChar(500)
+  opcoes_titulo String?  @map("opcoes_titulo") @db.LongText
+  opcao_texto   String?  @map("opcao_texto") @db.LongText
+  opcao_imagens String?  @map("opcao_imagens") @db.LongText
+  status        String   @map("status") @db.VarChar(150)
+  titulo        String?  @map("titulo") @db.Text
+  texto         String?  @map("texto") @db.LongText
+  imagem        String?  @map("imagem") @db.Text
+  agente_titulo BigInt   @map("agente_titulo")
+  agente_texto  BigInt   @map("agente_texto")
+  agente_imagem BigInt   @map("agente_imagem")
+  criado_em     DateTime @default(now()) @map("criado_em")
+  atualizado_em DateTime @updatedAt @map("atualizado_em")
+
+  agenteTituloRelation Agente @relation("AgenteTitulo", fields: [agente_titulo], references: [id_agente])
+  agenteTextoRelation  Agente @relation("AgenteTexto", fields: [agente_texto], references: [id_agente])
+  agenteImagemRelation Agente @relation("AgenteImagem", fields: [agente_imagem], references: [id_agente])
+
+  @@map("conteudos")
+}
+
