@@ -59,12 +59,11 @@ class ContentGenService {
         editoria: item.editoria,
         status: item.status,
         agentes:
-          item.agenteImagemRelation.nome +
-          ", " +
-          item.agenteTextoRelation.nome +
-          ", " +
-          item.agenteTituloRelation.nome,
+          item.agenteTextoRelation.nome + ", " + item.agenteTituloRelation.nome,
       };
+
+      /*  item.agenteImagemRelation.nome +
+          ", " + */
     });
 
     return formattedContent;
