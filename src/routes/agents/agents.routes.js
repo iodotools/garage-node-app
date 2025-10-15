@@ -14,7 +14,7 @@ agentsRouter.get("/get-agents", authMiddleware, async (req, res, next) => {
       orderBy: "created_at",
       orderDirection: "desc",
       cliente: req.query.cliente || 1,
-      tipo: req.query.tipo || null,
+      tipo: req.query.tipo || ["TEXTO", "TITULO"],
     };
     const agents = await agentsService.getAgents(args);
     res.status(200).json({ agents });
