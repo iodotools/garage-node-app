@@ -35,7 +35,7 @@ class AgentsService {
     }
 
     if (tipo) {
-      queryOptions.where.tipo = tipo;
+      queryOptions.where.tipo = { in: Array.isArray(tipo) ? tipo : [tipo] };
     }
 
     if (perPage !== undefined) {
