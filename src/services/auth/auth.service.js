@@ -427,7 +427,56 @@ class AuthService {
       email,
       "Redefinição de Senha",
       `Clique no link para redefinir sua senha: ${resetLink}`,
-      `Clique no link para redefinir sua senha: <a href="${resetLink}">${resetLink}</a>`
+      `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Redefinição de Senha - Garage DM9</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td style="padding: 40px;">
+                            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td style="text-align: center; padding-bottom: 30px;">
+                                      <img src="https://tools.garage.dm9.com.br/logo-garage.png" alt="Garage Logo" width="171" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-bottom: 30px;">
+                                        <h1 style="color: #333333; font-size: 24px; margin: 0; text-align: center;">Redefinição de Senha</h1>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-bottom: 30px;">
+                                        <p style="color: #666666; font-size: 16px; line-height: 24px; margin: 0;">Olá,</p>
+                                        <p style="color: #666666; font-size: 16px; line-height: 24px; margin: 20px 0;">Você solicitou a redefinição da sua senha. Clique no botão abaixo para continuar:</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-bottom: 30px; text-align: center;">
+                                        <a href="${resetLink}" style="background-color: #007bff; color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 4px; font-size: 16px; font-weight: bold;">Redefinir Senha</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <p style="color: #666666; font-size: 14px; line-height: 20px; margin: 20px 0 0;">Se você não solicitou esta alteração, por favor, ignore este e-mail.</p>
+                                        <p style="color: #666666; font-size: 14px; line-height: 20px; margin-top: 10px;">Atenciosamente,<br>Equipe Garage - DM9</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
     );
   }
 
