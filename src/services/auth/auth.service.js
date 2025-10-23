@@ -459,7 +459,7 @@ class AuthService {
                                 </tr>
                                 <tr>
                                     <td style="padding-bottom: 30px; text-align: center;">
-                                        <a href="${resetLink}" style="background-color: #007bff; color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 4px; font-size: 16px; font-weight: bold;">Redefinir Senha</a>
+                                        <a href="${resetLink}" style="background-color: #FFCE00; color: #000000; text-decoration: none; padding: 15px 30px; border-radius: 4px; font-size: 16px; font-weight: bold;">Redefinir Senha</a>
                                     </td>
                                 </tr>
                                 <tr>
