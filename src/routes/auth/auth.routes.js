@@ -36,6 +36,26 @@ const verify2FASchema = z.object({
   }),
 });
 
+const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+  }),
+});
+
+const resetPasswordSchema = z.object({
+  body: z.object({
+    token: z.string(),
+    newPassword: z.string().min(6),
+  }),
+});
+
+const changePasswordSchema = z.object({
+  body: z.object({
+    oldPassword: z.string(),
+    newPassword: z.string().min(6),
+  }),
+});
+
 const refreshTokenSchema = z.object({
   body: z.object({
     refreshToken: z.string(),
@@ -128,5 +148,51 @@ authRouter.get("/check-email", async (req, res, next) => {
     next(error);
   }
 });
+
+//## Endpoint Forgot Password
+authRouter.post(
+  "/forgot-password",
+  validate(forgotPasswordSchema),
+  async (req, res, next) => {
+    try {
+      const { email } = req.body;
+      await authService.forgotPassword(email);
+      res.json({ message: "Se um usuário com este e-mail existir, um link de redefinição de senha foi enviado." });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+//## Endpoint Reset Password
+authRouter.post(
+  "/reset-password",
+  validate(resetPasswordSchema),
+  async (req, res, next) => {
+    try {
+      const { token, newPassword } = req.body;
+      await authService.resetPassword(token, newPassword);
+      res.json({ message: "Senha redefinida com sucesso." });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+//## Endpoint Change Password
+authRouter.post(
+  "/change-password",
+  authMiddleware,
+  validate(changePasswordSchema),
+  async (req, res, next) => {
+    try {
+      const { oldPassword, newPassword } = req.body;
+      await authService.changePassword(parseInt(req.user.id_user), oldPassword, newPassword);
+      res.json({ message: "Senha alterada com sucesso." });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 module.exports = { authRouter };

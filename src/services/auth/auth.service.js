@@ -403,6 +403,68 @@ class AuthService {
     };
   }
 
+    async forgotPassword(email) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      // Don't reveal that the user does not exist
+      return;
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(new Date().getTime() + 2 * 60 * 60 * 1000); // 2 hours
+
+    await prisma.passwordResetToken.create({
+      data: {
+        email,
+        token,
+        expires,
+      },
+    });
+
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+
+    await this.emailService.sendMail(
+      email,
+      "Redefinição de Senha",
+      `Clique no link para redefinir sua senha: ${resetLink}`,
+      `Clique no link para redefinir sua senha: <a href="${resetLink}">${resetLink}</a>`
+    );
+  }
+
+  async resetPassword(token, newPassword) {
+    const resetToken = await prisma.passwordResetToken.findUnique({
+      where: { token },
+    });
+
+    if (!resetToken || new Date(resetToken.expires) < new Date()) {
+      throw new Error("Token inválido ou expirado.");
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { email: resetToken.email },
+      data: { password: hashedPassword },
+    });
+
+    await prisma.passwordResetToken.delete({ where: { token } });
+  }
+
+  async changePassword(userId, oldPassword, newPassword) {
+    const user = await prisma.user.findUnique({ where: { id_user: userId } });
+
+    if (!user || !user.password || !(await bcrypt.compare(oldPassword, user.password))) {
+      throw new Error("Senha antiga inválida.");
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id_user: userId },
+      data: { password: hashedPassword },
+    });
+  }
+
   async checkEmailExists(email) {
     if (!email) {
       return { exists: false };
