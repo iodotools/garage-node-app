@@ -142,6 +142,7 @@ model Conteudo {
   titulo        String?  @map("titulo") @db.Text
   texto         String?  @map("texto") @db.LongText
   imagem        String?  @map("imagem") @db.Text
+  meta_description String? @map("meta_description") @db.Text
   agente_titulo BigInt   @map("agente_titulo")
   agente_texto  BigInt   @map("agente_texto")
   agente_imagem BigInt   @map("agente_imagem")

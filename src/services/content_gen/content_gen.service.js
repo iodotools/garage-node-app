@@ -58,6 +58,7 @@ class ContentGenService {
         identificador: item.name,
         editoria: item.editoria,
         status: item.status,
+        metaDescription: item.meta_description,
         agentes:
           item.agenteTextoRelation.nome + ", " + item.agenteTituloRelation.nome,
       };
@@ -126,6 +127,7 @@ class ContentGenService {
       title: content.titulo,
       content: content.texto,
       imageUrl: content.imagem,
+      metaDescription: content.meta_description,
     };
   }
 }
